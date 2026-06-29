@@ -1,0 +1,36 @@
+# ── Python ──────────────────────────────────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.venv/
+venv/
+
+# ── Models — large binary files, regenerate via train.py instead ────────────
+ml/isolation_forest/model.pkl
+ml/isolation_forest/scaler.pkl
+ml/isolation_forest/config.pkl
+ml/tft/tft_model.pt
+ml/tft/config.pkl
+
+# ── Generated / runtime data — never commit these ────────────────────────────
+results/
+results/backups/
+*.csv
+*.xlsx
+*.pdf
+
+# ── Real meter data — sensitive, never commit ────────────────────────────────
+# if you keep any real Excel test files locally, exclude their folder:
+real_meter_data/
+test_meters/
+
+# ── Environment / secrets ────────────────────────────────────────────────────
+.env
+*.key
+
+# ── OS / editor junk ──────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.vscode/
+*.swp

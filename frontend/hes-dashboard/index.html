@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BVEngine — Billing Validation Engine</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 13px;
+    background: #e9f2ea;
+    color: #2d2d2d;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 16px;
+  }
+
+  .top-bar {
+    width: 100%;
+    max-width: 820px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+  }
+  .brand {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1a1a2e;
+    letter-spacing: -0.3px;
+  }
+  .status-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #888;
+  }
+  .status-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: #ccc;
+  }
+  .status-dot.online { background: #49cc90; }
+
+  /* ── Terminal-style box, light theme ── */
+  .terminal-wrap {
+    width: 100%;
+    max-width: 820px;
+    background: #fff;
+    border: 1px solid #d8dde6;
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+  }
+
+  .terminal-titlebar {
+    background: #f5f7fa;
+    padding: 9px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid #e8ecf0;
+  }
+  .titlebar-text {
+    font-size: 11px;
+    color: #999;
+    font-family: "SFMono-Regular", Consolas, monospace;
+  }
+
+  .terminal-body {
+    padding: 20px 20px 16px;
+    min-height: 380px;
+    max-height: 580px;
+    overflow-y: auto;
+    font-family: "SFMono-Regular", Consolas, "Courier New", monospace;
+    font-size: 13px;
+    line-height: 1.7;
+    background: #0d0d0d;
+  }
+
+  .input-line {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+  .prompt-symbol { color: #49cc90; font-weight: 700; flex-shrink: 0; }
+  .path-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #49cc90;
+    font-family: inherit;
+    font-size: 13px;
+    caret-color: #49cc90;
+  }
+  .path-input::placeholder { color: #2f5c41; }
+
+  .log-line {
+    color: #49cc90;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .log-line.dim    { color: #2f7a52; }
+  .log-line.error  { color: #ff6b6b; }
+  .log-line.white  { color: #e8e8e8; }
+  .log-line.high   { color: #ff6b6b; font-weight: 700; }
+  .log-line.med    { color: #ffb648; font-weight: 700; }
+  .log-line.low    { color: #49cc90; font-weight: 700; }
+  .log-line.header { color: #6fa8ff; font-weight: 700; }
+
+  /* ── Controls below terminal ── */
+  .controls {
+    width: 100%;
+    max-width: 820px;
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  .btn {
+    flex: 1;
+    padding: 11px 14px;
+    border-radius: 4px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    cursor: pointer;
+    border: 1px solid #d8dde6;
+    background: #fff;
+    color: #555;
+    transition: all 0.15s;
+    text-decoration: none;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .btn:hover { border-color: #1a1a2e; color: #1a1a2e; background: #f5f7fa; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn.primary {
+    background: #1a1a2e;
+    color: #fff;
+    border-color: #1a1a2e;
+  }
+  .btn.primary:hover { background: #2d2d4e; color: #fff; }
+
+  .hint {
+    width: 100%;
+    max-width: 820px;
+    margin-top: 14px;
+    font-size: 11px;
+    color: #999;
+    text-align: center;
+  }
+  .hint code {
+    background: #e8ecf0;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-family: "SFMono-Regular", Consolas, monospace;
+  }
+
+  .synthetic-row {
+    width: 100%;
+    max-width: 820px;
+    margin-top: 12px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    font-size: 12px;
+    color: #666;
+  }
+  .synthetic-row select {
+    background: #fff;
+    border: 1px solid #d8dde6;
+    color: #444;
+    font-family: inherit;
+    font-size: 11px;
+    padding: 6px 8px;
+    border-radius: 3px;
+    outline: none;
+  }
+  .synthetic-row select:focus { border-color: #1a1a2e; }
+  .synthetic-row button {
+    background: #fff;
+    border: 1px solid #d8dde6;
+    color: #444;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 6px 14px;
+    border-radius: 3px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .synthetic-row button:hover { border-color: #1a1a2e; background: #f5f7fa; }
+
+  .synth-data-box {
+    width: 100%;
+    max-width: 820px;
+    margin-top: 12px;
+    background: #fff;
+    border: 1px solid #d8dde6;
+    border-radius: 6px;
+    overflow: hidden;
+    display: none;
+  }
+  .synth-data-box.visible { display: block; }
+  .synth-data-titlebar {
+    background: #f5f7fa;
+    padding: 8px 14px;
+    font-size: 11px;
+    color: #999;
+    font-family: "SFMono-Regular", Consolas, monospace;
+    border-bottom: 1px solid #e8ecf0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .synth-data-titlebar button {
+    background: none;
+    border: none;
+    color: #999;
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+  }
+  .synth-data-titlebar button:hover { color: #1a1a2e; }
+  .synth-data-body {
+    background: #0d0d0d;
+    padding: 14px 16px;
+    max-height: 320px;
+    overflow-y: auto;
+    font-family: "SFMono-Regular", Consolas, "Courier New", monospace;
+    font-size: 12px;
+    line-height: 1.6;
+    color: #49cc90;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-track { background: #0d0d0d; }
+  ::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <span class="brand">Billing Validation Engine</span>
+  <div class="status-row">
+    <div class="status-dot" id="status-dot"></div>
+    <span id="status-text">connecting...</span>
+  </div>
+</div>
+
+<div class="terminal-wrap">
+  <div class="terminal-titlebar">
+    <span class="titlebar-text">BVEngine — Billing Validation Engine — validate</span>
+  </div>
+  <div class="terminal-body" id="terminal-body">
+    <div class="input-line" id="input-line">
+      <span class="prompt-symbol">&gt;</span>
+      <input type="text" class="path-input" id="path-input"
+             placeholder="C:\Users\...\Bill  or  C:\Users\...\meter.xlsx"
+             autocomplete="off" spellcheck="false" />
+    </div>
+  </div>
+</div>
+
+<div class="controls">
+  <button class="btn primary" id="download-btn" onclick="downloadReport()">⬇ Download Report</button>
+  <button class="btn" id="clear-btn" onclick="clearTerminal()">Clear</button>
+</div>
+
+<div class="synthetic-row">
+  <span>Generate</span>
+  <select id="synth-type">
+    <option>Industrial</option>
+    <option>Commercial</option>
+    <option>Residential</option>
+  </select>
+  <select id="synth-anomaly">
+    <option value="None">Normal</option>
+    <option value="SuddenSpike">Spike</option>
+    <option value="SuddenDrop">Drop</option>
+    <option value="ZeroConsumption">Zero</option>
+    <option value="NTL_Suspected">NTL</option>
+    <option value="PowerFactorAnomaly">PF anomaly</option>
+  </select>
+  <button onclick="runSynthetic()">Run</button>
+</div>
+
+<div class="synth-data-box" id="synth-data-box">
+  <div class="synth-data-titlebar">
+    <span>generated payload — meterId / history / current readings</span>
+    <div style="display:flex; gap:10px; align-items:center">
+      <button onclick="saveSynthAsExcel()" style="font-size:11px; color:#49cc90; text-transform:uppercase; letter-spacing:0.3px">⬇ Save as Excel</button>
+      <button onclick="closeSynthBox()">✕</button>
+    </div>
+  </div>
+  <div class="synth-data-body" id="synth-data-body"></div>
+</div>
+
+<div class="hint">Reports saved to <code>BVEngine2\results\</code> · API: <span id="api-base-display">http://127.0.0.1:8000</span></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+const API_BASE = "http://127.0.0.1:8000";
+let lastResult = null;
+let lastSynthPayload = null;
+
+const body = document.getElementById('terminal-body');
+const inputLine = document.getElementById('input-line');
+const pathInput = document.getElementById('path-input');
+
+function scrollBottom() {
+  body.scrollTop = body.scrollHeight;
+}
+
+function addLine(text, cls) {
+  const div = document.createElement('div');
+  div.className = 'log-line' + (cls ? ' ' + cls : '');
+  div.textContent = text;
+  body.insertBefore(div, inputLine);
+  scrollBottom();
+  return div;
+}
+
+function addBlank() { addLine('', ''); }
+
+async function checkHealth() {
+  try {
+    const r = await fetch(API_BASE + '/api/health');
+    const d = await r.json();
+    document.getElementById('status-dot').className = 'status-dot online';
+    document.getElementById('status-text').textContent = 'online · ' + (d.device || 'cpu');
+  } catch {
+    document.getElementById('status-dot').className = 'status-dot';
+    document.getElementById('status-text').textContent = 'offline';
+  }
+}
+checkHealth();
+setInterval(checkHealth, 8000);
+
+pathInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    const val = pathInput.value.trim();
+    if (!val) return;
+    runPath(val);
+  }
+});
+
+async function runPath(path) {
+  addLine('> ' + path, '');
+  pathInput.value = '';
+  pathInput.disabled = true;
+
+  addLine('Resolving path...', 'dim');
+
+  try {
+    const r = await fetch(API_BASE + '/api/process', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path: path, location: 'Chennai' })
+    });
+
+    if (!r.ok) {
+      const errText = await r.text();
+      throw new Error(JSON.stringify({ status: r.status, body: errText }));
+    }
+
+    addLine('[' + r.status + '] OK', 'low');
+    lastResult = await r.json();
+    renderResult(lastResult);
+
+  } catch (err) {
+    let status = '—';
+    let msg = err.message;
+    try {
+      const parsed = JSON.parse(msg);
+      status = parsed.status;
+      msg = JSON.parse(parsed.body).detail || parsed.body;
+    } catch {}
+    addLine('[' + status + '] ERROR: ' + msg, 'error');
+  }
+
+  pathInput.disabled = false;
+  pathInput.focus();
+  addBlank();
+}
+
+async function runSynthetic() {
+  const mtype   = document.getElementById('synth-type').value;
+  const anomaly = document.getElementById('synth-anomaly').value;
+
+  addLine('> synthetic --type=' + mtype + ' --anomaly=' + anomaly, '');
+  addLine('Generating synthetic payload...', 'dim');
+
+  const payload = generateSynthetic(mtype, anomaly);
+  lastSynthPayload = payload;
+
+  // show the generated payload in its own box
+  document.getElementById('synth-data-box').classList.add('visible');
+  document.getElementById('synth-data-body').textContent = JSON.stringify(payload, null, 2);
+
+  try {
+    const r = await fetch(API_BASE + '/api/validate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!r.ok) {
+      const errText = await r.text();
+      throw new Error(JSON.stringify({ status: r.status, body: errText }));
+    }
+    addLine('[' + r.status + '] OK', 'low');
+    lastResult = await r.json();
+    renderResult(lastResult);
+  } catch (err) {
+    let status = '—';
+    let msg = err.message;
+    try {
+      const parsed = JSON.parse(msg);
+      status = parsed.status;
+      msg = JSON.parse(parsed.body).detail || parsed.body;
+    } catch {}
+    addLine('[' + status + '] ERROR: ' + msg, 'error');
+  }
+  addBlank();
+}
+
+function generateSynthetic(mtype, anomaly) {
+  const bases = { Industrial: 1200000, Commercial: 45000, Residential: 11000 };
+  const base  = bases[mtype];
+  const pf    = mtype === 'Industrial' ? 0.67 : 0.94;
+  const tariff= { Industrial:'LT-3', Commercial:'LT-2', Residential:'LT-1' }[mtype];
+
+  // split total active energy across rate1-4 the way real M2GDDAC1 does:
+  // rate1 near-zero, rate2 largest, rate3 medium, rate4 smallest
+  function splitRates(totalWh) {
+    const r1 = Math.round(totalWh * 0.0002);
+    const r2 = Math.round(totalWh * 0.65);
+    const r3 = Math.round(totalWh * 0.25);
+    const r4 = totalWh - r1 - r2 - r3;
+    return [r1, r2, r3, r4];
+  }
+
+  function buildReadings(totalWh, pfVal, peakW) {
+    const [r1, r2, r3, r4] = splitRates(totalWh);
+    const apparentWh = Math.round(totalWh / pfVal);
+    const [a1, a2, a3, a4] = splitRates(apparentWh);
+    const reactiveQI  = Math.round(totalWh * 1.14); // matches real ratio roughly
+    const [q1, q2, q3, q4] = splitRates(reactiveQI);
+
+    return [
+      { obisCode: '1.0.1.8.0.255',  value: totalWh },
+      { obisCode: '1.0.1.8.1.255',  value: r1 },
+      { obisCode: '1.0.1.8.2.255',  value: r2 },
+      { obisCode: '1.0.1.8.3.255',  value: r3 },
+      { obisCode: '1.0.1.8.4.255',  value: r4 },
+      { obisCode: '1.0.9.8.0.255',  value: apparentWh },
+      { obisCode: '1.0.9.8.1.255',  value: a1 },
+      { obisCode: '1.0.9.8.2.255',  value: a2 },
+      { obisCode: '1.0.9.8.3.255',  value: a3 },
+      { obisCode: '1.0.9.8.4.255',  value: a4 },
+      { obisCode: '1.0.13.0.0.255', value: pfVal },
+      { obisCode: '1.0.84.0.0.255', value: 1 },
+      { obisCode: '1.0.5.8.0.255',  value: reactiveQI },
+      { obisCode: '1.0.5.8.1.255',  value: q1 },
+      { obisCode: '1.0.5.8.2.255',  value: q2 },
+      { obisCode: '1.0.5.8.3.255',  value: q3 },
+      { obisCode: '1.0.5.8.4.255',  value: q4 },
+      { obisCode: '1.0.8.8.0.255',  value: 0 },
+      { obisCode: '1.0.1.6.0.255',  value: peakW },
+      { obisCode: '1.0.9.6.0.255',  value: Math.round(peakW / pfVal) },
+    ];
+  }
+
+  const history = [];
+  for (let i = 0; i < 11; i++) {
+    const d = new Date(2025, 6 + i - 11, 1);
+    const period = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+    const var_ = 0.9 + Math.random() * 0.2;
+    let energy = Math.round(base * var_);
+    let peak   = Math.round(energy/720*2.2);
+    history.push({
+      billingPeriod: period,
+      readings: buildReadings(energy, pf + (Math.random()-0.5)*0.02, peak)
+    });
+  }
+
+  let current_energy = Math.round(base * (0.9 + Math.random()*0.2));
+  let current_pf = pf;
+  let current_peak = Math.round(current_energy/720*2.2);
+
+  if (anomaly === 'SuddenSpike')     current_energy = Math.round(base * 3.5);
+  if (anomaly === 'SuddenDrop')      current_energy = Math.round(base * 0.07);
+  if (anomaly === 'ZeroConsumption') current_energy = 0;
+  if (anomaly === 'NTL_Suspected') {
+    current_energy = Math.round(base * 0.07);
+    current_pf = 0.74;
+    current_peak = Math.round(base/720*2.0);
+  }
+  if (anomaly === 'PowerFactorAnomaly') current_pf = 0.72;
+
+  const now = new Date();
+  const billingPeriod = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
+
+  return {
+    utilityId: 'default',
+    meterId:   'SYNTH-' + Math.random().toString(36).slice(2,7).toUpperCase(),
+    meterType: mtype,
+    tariffSlab: tariff,
+    location:  'Mysuru',
+    billingPeriod,
+    historyMonths: 11,
+    currentReadings: buildReadings(current_energy, current_pf, current_peak),
+    history
+  };
+}
+
+function fmtWh(v) {
+  if (v === undefined || v === null) return '—';
+  return Number(v).toLocaleString(undefined, {maximumFractionDigits:0}) + ' Wh';
+}
+
+function sevClass(sev) {
+  return sev === 'HIGH' ? 'high' : sev === 'MEDIUM' ? 'med' : 'low';
+}
+
+function renderResult(r) {
+  const mo = r.modelOutputs || {};
+  const sc = r.scoreComponents || {};
+  const rf = r.ruleFlags || {};
+  const ft = r.features || {};
+  const w  = r.weather || {};
+
+  addLine('Parsing complete.', 'dim');
+  addLine('Calling /api/validate ...', 'dim');
+  addBlank();
+
+  addLine('METER_ID         ' + (r.meterId || '—'), 'white');
+  addLine('BILLING_PERIOD   ' + (r.billingPeriod || '—'), 'white');
+  addLine('HISTORY_MONTHS   ' + (r.historyMonths || 0) + '   CONFIDENCE=' + (r.modelConfidence || '—'), '');
+  addBlank();
+
+  addLine('── FEATURES ─────────────────────────────', 'header');
+  const featOrder = [
+    'EnergyVsAvgRatio','VsSeasonalAvgRatio','DeviationInStdDevs',
+    'MoMChangePct','TrendSlope','PowerFactor_Deviation',
+    'PeakDemandToAvgRatio','IsSummer'
+  ];
+  featOrder.forEach(k => {
+    if (ft[k] !== undefined) {
+      addLine('  ' + k.padEnd(24) + ' = ' + Number(ft[k]).toFixed(4), '');
+    }
+  });
+  if (w.temperatureC !== undefined) {
+    addLine('  temperature_c'.padEnd(27) + ' = ' + Number(w.temperatureC).toFixed(2), 'dim');
+  }
+  addBlank();
+
+  addLine('── ISOLATION FOREST ─────────────────────', 'header');
+  addLine('  if_score   = ' + (mo.ifScore !== undefined ? mo.ifScore.toFixed(4) : '—') + '   (threshold ≈ -0.512)', '');
+  addLine('  if_flagged = ' + (mo.ifIsAnomaly ? 'TRUE' : 'FALSE'), mo.ifIsAnomaly ? 'high' : '');
+  addBlank();
+
+  addLine('── TFT FORECAST ─────────────────────────', 'header');
+  addLine('  p10 = ' + fmtWh(mo.tftP10), '');
+  addLine('  p50 = ' + fmtWh(mo.tftPredictedWh), '');
+  addLine('  p90 = ' + fmtWh(mo.tftP90), '');
+  addLine('  actual    = ' + fmtWh(r.actualWh), '');
+  addLine('  deviation = ' + (r.deviationPct > 0 ? '+' : '') + r.deviationPct + '%', Math.abs(r.deviationPct) > 30 ? 'med' : '');
+  addLine('  sudden_drop  = ' + (mo.tftSuddenDrop ? 'TRUE' : 'FALSE'), mo.tftSuddenDrop ? 'high' : '');
+  addLine('  sudden_spike = ' + (mo.tftSuddenSpike ? 'TRUE' : 'FALSE'), mo.tftSuddenSpike ? 'high' : '');
+  addBlank();
+
+  addLine('── RULES ENGINE ──────────────────────────', 'header');
+  const fired = Object.entries(rf).filter(([,v]) => v).map(([k]) => k);
+  if (fired.length) {
+    fired.forEach(f => addLine('  ' + f + ' = TRUE', 'high'));
+  } else {
+    addLine('  none fired', 'dim');
+  }
+  addBlank();
+
+  addLine('── SCORE ─────────────────────────────────', 'header');
+  addLine('  isolation_forest = ' + (sc.isolation_forest || 0).toFixed(1) + ' / 40', '');
+  addLine('  tft_deviation    = ' + (sc.tft_deviation || 0) + ' / 30', '');
+  addLine('  rules            = ' + (sc.rules || 0) + ' / 50', '');
+  addLine('  ─────────────────────────', 'dim');
+  addLine('  TOTAL = ' + r.riskScore + ' / 100   [' + r.severity + ']', sevClass(r.severity));
+  addLine('  anomaly_type   = ' + (r.anomalyType || 'None'), '');
+  addLine('  ntl_suspected  = ' + (r.ntlSuspected ? 'TRUE' : 'FALSE'), r.ntlSuspected ? 'high' : '');
+  addLine('  pre_invoice    = ' + (r.preInvoiceFlag ? 'HOLD' : 'CLEAR'), r.preInvoiceFlag ? 'med' : '');
+  addLine('  revenue_at_risk= Rs ' + (r.revenueAtRiskINR || 0).toFixed(2), '');
+  addBlank();
+
+  if (r.reports && r.reports.excel) {
+    addLine('Reports written → BVEngine2\\results\\', 'dim');
+    addLine('  ' + r.reports.excel.split('/').pop(), 'dim');
+    addLine('  ' + r.reports.pdf.split('/').pop(), 'dim');
+  }
+}
+
+function downloadReport() {
+  if (!lastResult || !lastResult.reports || !lastResult.reports.pdf) {
+    addLine('No report available yet. Run a validation first.', 'error');
+    addBlank();
+    return;
+  }
+  window.open(API_BASE + lastResult.reports.pdf, '_blank');
+  window.open(API_BASE + lastResult.reports.excel, '_blank');
+}
+
+function saveSynthAsExcel() {
+  if (!lastSynthPayload) return;
+  const p = lastSynthPayload;
+
+  function readingVal(readings, code) {
+    const r = readings.find(x => x.obisCode === code);
+    return r ? r.value : 0;
+  }
+
+  // one row per month — history first (oldest first), then current month
+  const rows = [];
+  const allMonths = [...p.history, {
+    billingPeriod: p.billingPeriod,
+    readings: p.currentReadings
+  }];
+
+  allMonths.forEach((m, idx) => {
+    const energy = readingVal(m.readings, '1.0.1.8.0.255');
+    const pf     = readingVal(m.readings, '1.0.13.0.0.255');
+    const peak   = readingVal(m.readings, '1.0.1.6.0.255');
+    const app    = readingVal(m.readings, '1.0.9.8.0.255');
+    const month  = parseInt(m.billingPeriod.split('-')[1], 10);
+    const season = [4,5,6,7,8].includes(month) ? 'Summer'
+                 : [9,10,11].includes(month)    ? 'Monsoon' : 'Winter';
+
+    rows.push({
+      MeterId:                 p.meterId,
+      MeterType:                p.meterType,
+      TariffSlab:               p.tariffSlab,
+      Location:                 p.location,
+      BillingPeriodEnd:         m.billingPeriod,
+      MonthIndex:               idx,
+      Month:                    month,
+      Season:                   season,
+      ActiveEnergy_Total_Wh:    energy,
+      PowerFactor_Avg:          Number(pf).toFixed(4),
+      PeakDemand_W:             peak,
+      ApparentEnergy_VAh:       app,
+      AnomalyLabel:             (idx === allMonths.length - 1)
+                                  ? document.getElementById('synth-anomaly').value
+                                  : 'None',
+    });
+  });
+
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Synthetic Meter Data');
+
+  const filename = p.meterId + '_synthetic.xlsx';
+  XLSX.writeFile(wb, filename);
+}
+
+function closeSynthBox() {
+  document.getElementById('synth-data-box').classList.remove('visible');
+}
+
+function clearTerminal() {
+  document.querySelectorAll('.log-line').forEach(el => el.remove());
+}
+
+pathInput.focus();
+</script>
+</body>
+</html>

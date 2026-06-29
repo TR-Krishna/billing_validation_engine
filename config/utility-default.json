@@ -1,0 +1,36 @@
+{
+  "utilityId": "default",
+  "description": "Default OBIS mapping for IS 16444 compliant smart meters",
+  "obisMapping": {
+    "totalActiveEnergy":    "1.0.1.8.0.255",
+    "rate1Energy":          "1.0.1.8.1.255",
+    "rate2Energy":          "1.0.1.8.2.255",
+    "rate3Energy":          "1.0.1.8.3.255",
+    "rate4Energy":          "1.0.1.8.4.255",
+    "peakDemand":           "1.0.1.6.0.255",
+    "apparentEnergy":       "1.0.9.8.0.255",
+    "powerFactor":          "1.0.13.0.0.255",
+    "powerFactorImport":    "1.0.84.0.0.255",
+    "reactiveQI":           "1.0.5.8.0.255",
+    "reactiveQII":          "1.0.6.8.0.255",
+    "reactiveQIII":         "1.0.7.8.0.255",
+    "reactiveQIV":          "1.0.8.8.0.255",
+    "billingPeriodEnd":     "0.0.0.1.2.255"
+  },
+  "thresholds": {
+    "powerFactorMin":         0.85,
+    "rateSumTolerancePct":    2.0,
+    "billingMismatchPct":     2.0,
+    "ntlEnergyDropPct":       85.0,
+    "ntlPFDropMin":           0.08,
+    "bypassEnergyDropPct":    80.0,
+    "flatLineMonths":         3,
+    "tftDeviationHighPct":    60.0,
+    "tftDeviationMediumPct":  30.0
+  },
+  "meterTypes": {
+    "Residential": "LT-1",
+    "Commercial":  "LT-2",
+    "Industrial":  "LT-3"
+  }
+}
