@@ -1,8 +1,8 @@
-# BVEngine — Billing Validation Engine
+# BVEngine � Billing Validation Engine
 
 A billing validation engine for smart meter data. It combines two ML models
-with a rules engine to detect billing anomalies — meter tampering, non-technical
-losses, billing mismatches, and other unusual consumption patterns — before
+with a rules engine to detect billing anomalies � meter tampering, non-technical
+losses, billing mismatches, and other unusual consumption patterns � before
 bills go out.
 
 Built during a Schneider Electric internship project, targeting real smart
@@ -14,32 +14,32 @@ meters in Mysuru, India.
 
 ```
 Raw meter readings (OBIS codes)
-        │
-        ▼
-  Feature Engine          → 8 engineered features per month, relative
+        ?
+        ?
+  Feature Engine          ? 8 engineered features per month, relative
                              to each meter's own history
-        │
-        ├──► Isolation Forest   → flags statistically unusual consumption
-        │                          patterns (unsupervised)
-        │
-        ├──► TFT (Temporal      → forecasts expected consumption (P10/P50/P90),
-        │     Fusion Transformer)  flags large deviations from forecast
-        │
-        └──► Rules Engine        → 9 deterministic checks: rate-sum errors,
+        ?
+        ???? Isolation Forest   ? flags statistically unusual consumption
+        ?                          patterns (unsupervised)
+        ?
+        ???? TFT (Temporal      ? forecasts expected consumption (P10/P50/P90),
+        ?     Fusion Transformer)  flags large deviations from forecast
+        ?
+        ???? Rules Engine        ? 9 deterministic checks: rate-sum errors,
                                     zero consumption, PF anomalies, NTL/bypass
                                     signatures, tariff boundary gaming, etc.
-                  │
-                  ▼
-            Risk Scorer    → combines all 3 signals into one 0-100 score
-                  │
-                  ▼
-       Explanation Engine  → plain-English explanation + recommendation
-                  │
-                  ▼
-          FastAPI backend  → /api/process, /api/validate endpoints
-                  │
-                  ▼
-         Dashboard (HTML)  → terminal-style UI, type a meter path,
+                  ?
+                  ?
+            Risk Scorer    ? combines all 3 signals into one 0-100 score
+                  ?
+                  ?
+       Explanation Engine  ? plain-English explanation + recommendation
+                  ?
+                  ?
+          FastAPI backend  ? /api/process, /api/validate endpoints
+                  ?
+                  ?
+         Dashboard (HTML)  ? terminal-style UI, type a meter path,
                               see the full breakdown live
 ```
 
@@ -49,7 +49,7 @@ Raw meter readings (OBIS codes)
 
 ```
 api/
-  main.py                    FastAPI app — all endpoints live here
+  main.py                    FastAPI app � all endpoints live here
   core/
     feature_engine.py        Computes the 8 ML features from raw readings
     obis_resolver.py         Maps OBIS codes (DLMS/COSEM) to named fields
@@ -99,33 +99,33 @@ python -m pip install -r requirements.txt --break-system-packages
 
 ---
 
-## Running it — first time, full pipeline
+## Running it � first time, full pipeline
 
 Run these **in order**, from the project root:
 
 ```bash
 # 1. Generate synthetic training data
 python simulator/generate.py
-#    → creates results/simulated_meters.csv
+#    ? creates results/simulated_meters.csv
 #    (10,000 simulated meters, 36 months each, ~500 with anomalies)
 
 # 2. Train Isolation Forest
 python ml/isolation_forest/train.py
-#    → saves model.pkl, scaler.pkl, config.pkl into ml/isolation_forest/
+#    ? saves model.pkl, scaler.pkl, config.pkl into ml/isolation_forest/
 
-# 3. Train TFT (takes longer — neural network training)
+# 3. Train TFT (takes longer � neural network training)
 python ml/tft/train.py
-#    → saves tft_model.pt, config.pkl into ml/tft/
+#    ? saves tft_model.pt, config.pkl into ml/tft/
 
 # 4. Start the API
 python -m uvicorn api.main:app --reload --port 8000
-#    → wait for "All models ready!" in the terminal
+#    ? wait for "All models ready!" in the terminal
 
 # 5. Open the dashboard
 #    Just open frontend/hes-dashboard/index.html in a browser
 ```
 
-**Note:** `results/`, `*.pkl`, and `*.pt` files are gitignored — they're
+**Note:** `results/`, `*.pkl`, and `*.pt` files are gitignored � they're
 either generated or too large to commit. You must run steps 1-3 yourself
 after cloning before the API will have models to load.
 
@@ -142,7 +142,7 @@ Once the API is running and the dashboard is open in a browser:
   meter with a chosen anomaly type (Spike, Drop, Zero, NTL, PF anomaly)
   and run it through the same pipeline instantly.
 
-Every validation — real or synthetic — also auto-appends its data back
+Every validation � real or synthetic � also auto-appends its data back
 into `results/simulated_meters.csv`, so the dataset grows over time.
 A daily backup of the dataset is taken automatically before the first
 append each day (`results/backups/`), so changes can be rolled back via:
@@ -158,7 +158,7 @@ body: {"backup": "simulated_meters_YYYYMMDD.csv"}
 
 | Endpoint | Method | Purpose |
 |---|---|---|
-| `/api/process` | POST | Give it a single file or folder path — auto-detects and validates |
+| `/api/process` | POST | Give it a single file or folder path � auto-detects and validates |
 | `/api/validate` | POST | Validate a pre-built JSON payload directly |
 | `/api/reports/{filename}` | GET | Download a generated PDF/Excel report |
 | `/api/dataset/backups` | GET | List available dataset backups |
