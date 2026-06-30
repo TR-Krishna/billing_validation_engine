@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bve-deployment
+  namespace: bvengine
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bve-bvengine
+  template:                 
+    metadata:
+      labels:
+        app: bve-bvengine
+    spec:
+      containers:
+        - name: bve-bvengine
+          image: ghcr.io/tr-krishna/bve-bvengine:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+          resources:
+            requests: 
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
