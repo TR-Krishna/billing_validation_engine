@@ -2,7 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: bve-deployment
-  namespace: bvengine
 spec:
   replicas: 1
   selector:
@@ -15,7 +14,7 @@ spec:
     spec:
       containers:
         - name: bve-bvengine
-          image: ghcr.io/tr-krishna/bve-bvengine:latest
+          image: krishnatr/bve-bvengine:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 8000
