@@ -164,6 +164,9 @@ body: {"backup": "simulated_meters_YYYYMMDD.csv"}
 | `/api/reports/{filename}` | GET | Download a generated PDF/Excel report |
 | `/api/dataset/backups` | GET | List available dataset backups |
 | `/api/dataset/restore` | POST | Roll back the dataset to a backup |
-| `/api/health` | GET | Check if models are loaded |
+| `/api/health` | GET | Check if models are loaded |  
+
+
+
 
 s
