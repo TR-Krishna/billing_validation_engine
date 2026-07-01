@@ -8,6 +8,7 @@ bills go out.
 Built during a Schneider Electric internship project, targeting real smart
 meters in Mysuru, India.
 
+
 ---
 
 ## Architecture
